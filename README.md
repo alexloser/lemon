@@ -1,2 +1,3 @@
-# lemon
-Linux scripts for dev
+# Lemon
+### A group of smart scripts for dev
+
