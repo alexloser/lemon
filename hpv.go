@@ -78,7 +78,7 @@ func CheckHardware() bool {
 	}
 	fmt.Println()
 
-	out, err = Execute("free -m")
+	out, err = Execute("free -mht")
 	if err != nil {
 		return false
 	}
@@ -102,7 +102,7 @@ func CheckHardware() bool {
 	}
 	fmt.Println()
 
-	out, _ = Execute("lsb_release -r")
+	out, _ = Execute("lsb_release -a")
 	for i := range out {
 		fmt.Println(out[i])
 	}
