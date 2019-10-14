@@ -1,4 +1,4 @@
-#!/usr/bin/env/python3
+#!/usr/bin/env python3
 # coding: utf-8
 ''' This script works only for internal program '''
 import sys, os, re
@@ -91,7 +91,7 @@ OPTIMIZE3_EXTRA = ['-funroll-loops', '-ffast-math', '-fomit-frame-pointer', '-mi
 
 LINK = ['-L.', '-L ./libs', '-Wl,-rpath=.', '-Wl,-rpath=./.lib']
 
-LIBS1 = ['-lmxnet']
+LIBS1 = ['-lboost_system']
 LIBS2 = ['-lunwind', '-lglog', '-lgflags', '-ltcmalloc']
 LIBS3 = ['-lm', '-lmvec', '-ldl', '-static-libgcc', '-static-libstdc++']
 
