@@ -23,19 +23,19 @@ mkt = Template("""#!/usr/bin/env make
 .PHONY: all debug release main ${PHONY}
 CC  = ${CC}
 CXX = ${CXX}
-CC  += -std=c99   -m64 -pthread -fopenmp -fPIC
-CXX += -std=c++11 -m64 -pthread -fopenmp -fPIC -D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI}
+CC  += -std=gnu99   -m64 -pthread -fopenmp -fPIC
+CXX += -std=gnu++11 -m64 -pthread -fopenmp -fPIC -D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI}
 
-DEFINE     = ${DEFINE}
+DEFINE  = ${DEFINE}
 
-WARNING    = ${WARNING}
+WARNING = ${WARNING}
 
-OPTIMIZE0  = ${OPTIMIZE0}
+OPT0  = ${OPT0}
 
-OPTIMIZE3  = ${OPTIMIZE3}
-OPTIMIZE3 += ${OPTIMIZE3_EXTRA}
+OPT3  = ${OPT3}
+OPT3 += ${OPT3_EXTRA}
 
-CFLAGS = $(DEFINE) $(WARNING)
+CF = $(DEFINE) $(WARNING)
 
 LINK = ${LINK}
 
@@ -43,29 +43,23 @@ LIBS = ${LIBS1}
 LIBS += ${LIBS2}
 LIBS += ${LIBS3}
 
-all: debug release
-    rm -rf debug/*.o
+VER = 1.0
+
+all: build
+    rm -rf build/*.o
+
+build: main
+    mkdir -p ./build
+    $(CXX) $(CF) $(OPT3) $(LINK) build/*.o -o build/${PRONAME}.$(VER) $(LIBS)
     rm -rf release/*.o
-
-debug: main.d
-    $(CXX) $(CFLAGS) $(OPTIMIZE0) $(LINK) debug/*.o -o debug/${PRONAME}.d $(LIBS)
-    rm -rf debug/*.o
-
-release: main
-    $(CXX) $(CFLAGS) $(OPTIMIZE3) $(LINK) release/*.o -o release/${PRONAME} $(LIBS)
-    rm -rf release/*.o
-
-main.d:
-    $(CXX) $(CFLAGS) $(OPTIMIZE0)  -c src/main.cc  -o debug/main.o
 
 main:
-    $(CXX) $(CFLAGS) $(OPTIMIZE3)  -c src/main.cc  -o release/main.o
+    $(CXX) $(CF) $(OPT3) -c src/main.cc  -o build/main.o
 
 
 clean:
-    mkdir -p debug release
-    rm -rf debug/*
-    rm -rf release/*
+    mkdir -p build
+    rm -rf build/*.o build/${PRONAME}.$(VER)
 
 """)
 
@@ -83,16 +77,16 @@ DEFINE = ['-D_GNU_SOURCE', '-D_REENTRANT', '-DARMA_64BIT_WORD', '-DARMA_NO_DEBUG
 
 WARNING = ['-Wall', '-Wextra', '-Wno-unused-parameter']
 
-OPTIMIZE0 = ['-DDEBUG', '-O0', '-gdwarf-3']
+OPT0 = ['-DDEBUG', '-O0', '-gdwarf-3']
 
-OPTIMIZE3 = ['-DNDEBUG', '-Ofast', '-g0', '-mcrc32', '-mavx', '-march=native', '-mtune=intel']
+OPT3 = ['-DNDEBUG', '-Ofast', '-g0', '-mcrc32', '-mavx', '-march=native', '-mtune=intel']
 
-OPTIMIZE3_EXTRA = ['-funroll-loops', '-ffast-math', '-fomit-frame-pointer', '-minline-stringops-dynamically']
+OPT3_EXTRA = ['-funroll-loops', '-ffast-math', '-fomit-frame-pointer', '-minline-stringops-dynamically']
 
 LINK = ['-L.', '-L ./libs', '-Wl,-rpath=.', '-Wl,-rpath=./.lib']
 
 LIBS1 = ['-lboost_system']
-LIBS2 = ['-lunwind', '-lglog', '-lgflags', '-ltcmalloc']
+LIBS2 = ['/usr/local/lib/libglog.a', '/usr/local/lib/libgflags.a', '/usr/local/lib/libtcmalloc_minimal.a']
 LIBS3 = ['-lm', '-lmvec', '-ldl', '-static-libgcc', '-static-libstdc++']
 
 
@@ -120,9 +114,9 @@ def create_makefile():
     rargs['PHONY'] = ' '.join(PHONY)
     rargs['DEFINE'] = ' '.join(DEFINE)
     rargs['WARNING'] = ' '.join(WARNING)
-    rargs['OPTIMIZE0'] = ' '.join(OPTIMIZE0)
-    rargs['OPTIMIZE3'] = ' '.join(OPTIMIZE3)
-    rargs['OPTIMIZE3_EXTRA'] = ' '.join(OPTIMIZE3_EXTRA)
+    rargs['OPT0'] = ' '.join(OPT0)
+    rargs['OPT3'] = ' '.join(OPT3)
+    rargs['OPT3_EXTRA'] = ' '.join(OPT3_EXTRA)
     rargs['LINK'] = ' '.join(LINK)
     rargs['LIBS1'] = ' '.join(LIBS1)
     rargs['LIBS2'] = ' '.join(LIBS2)
