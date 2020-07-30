@@ -43,10 +43,13 @@ for name in path_walk(src_dir):
             break
     if ignore:
         continue  
-    cname = py_compile.compile(name)
+    cname = py_compile.compile(name, optimize=2)
     dst = cname.replace(src_dir, release_dir)
     for i in range(30, 40):
         dst = dst.replace(F".cpython-{i}.pyc", ".pyc")
+        dst = dst.replace(F".cpython-{i}.opt.pyc", ".pyc")
+        dst = dst.replace(F".cpython-{i}.opt-1.pyc", ".pyc")
+        dst = dst.replace(F".cpython-{i}.opt-2.pyc", ".pyc")
     dst = dst.replace("__pycache__", "")
     try:
         os.makedirs(os.path.dirname(dst))
