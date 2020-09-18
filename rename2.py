@@ -18,9 +18,13 @@ def Rename2(srcdir:list, sre:str, method:str, excludes:list):
             oldpath = F"{dirname}\\{name}"
             if not x.match(name):
                 continue
+            skip = False
             for ex in excludes:
                 if ex in name:
-                    continue
+                    skip = True
+                    break
+            if skip:
+                continue
             with open(oldpath, "rb") as fin:
                 data = fin.read()
             if method == "md5":
