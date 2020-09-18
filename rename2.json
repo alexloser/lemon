@@ -1,6 +1,6 @@
 {
-    "sre" : ".+\\.(jpg|jped|png|bmp|tiff)",
     "srcdir" : ["./images"],
-    "method" : "blake",
-    "exclude" : "pred"
+    "method" : "crc32-size",
+    "regex" : ".+\\.(jpg|jped|png|bmp|tiff)",
+    "excludes" : ["pred", "label"]
 }
