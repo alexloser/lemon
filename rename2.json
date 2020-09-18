@@ -1,0 +1,6 @@
+{
+    "sre" : ".+\\.(jpg|jped|png|bmp|tiff)",
+    "srcdir" : ["./images"],
+    "method" : "blake",
+    "exclude" : "pred"
+}
