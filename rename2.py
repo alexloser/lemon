@@ -1,67 +1,74 @@
 #!python
-import os, sys, re, json
+import os, sys, re, json, threading
 from zlib import crc32
 from hashlib import md5 as hashMD5
 
 
-def Rename2(srcdir:list, sre:str, method:str, excludes:list):
+def rename2(srcdir: str, sre: str, method: str, excludes: list):
+    x = re.compile(sre)
+    record = {}
+    names = os.listdir(srcdir)
+    print("Process:", os.path.realpath(srcdir), len(names), file=sys.stderr)
+    for name in names:
+        oldpath = F"{srcdir}\\{name}"
+        if not x.match(name):
+            continue
+        skip = False
+        for ex in excludes:
+            if ex in name:
+                skip = True
+                break
+        if skip:
+            continue
+        with open(oldpath, "rb") as fin:
+            data = fin.read()
+        if method == "md5":
+            hval = hashMD5(data).hexdigest()
+        else:  # "crc32-size"
+            hval = str(crc32(data))
+            while len(hval) < 8:
+                hval = "0" + hval
+            hval = F"{hval}-{os.path.getsize(oldpath)}"
+        ext = name.rsplit(".", 1)[-1]
+        if ext == name:
+            ext = ""
+        else:
+            ext = "." + ext
+        newpath = F"{srcdir}\\{hval}{ext}"
+        if not os.path.exists(newpath):
+            with open(newpath, "wb") as fout:
+                fout.write(data)
+            if newpath.lower() != oldpath.lower():
+                os.remove(oldpath)
+        else:
+            if newpath.lower() != oldpath.lower():
+                print(F"Already exist: {newpath}", file=sys.stderr)
+        record[oldpath] = newpath
+    n = len(list(k for k in record if record[k] != k))
+    print(n, F"files renamed in {os.path.realpath(srcdir)}", file=sys.stderr)
+
+
+def Rename2(srcdirs: list, sre: str, method: str, excludes: list):
     """ Rename all files info specific format """
     x = re.compile(sre)
     if method not in ("md5", "crc32-size"):
         raise ValueError(method)
-
-    record = {}
-    for dirname in srcdir:
-        names = os.listdir(dirname)
-        print("Process:", dirname, len(names), file=sys.stderr)
-        for name in names:
-            oldpath = F"{dirname}\\{name}"
-            if not x.match(name):
-                continue
-            skip = False
-            for ex in excludes:
-                if ex in name:
-                    skip = True
-                    break
-            if skip:
-                continue
-            with open(oldpath, "rb") as fin:
-                data = fin.read()
-            if method == "md5":
-                hval = hashMD5(data).hexdigest()
-            else:
-                hval = str(crc32(data))
-                while len(hval) < 8:
-                    hval = "0" + hval
-                hval = F"{hval}-{os.path.getsize(oldpath)}"
-            ext = name.rsplit(".", 1)[-1]
-            if ext == name:
-                ext = ""
-            else:
-                ext = "." + ext
-            newpath = F"{dirname}\\{hval}{ext}"
-            if not os.path.exists(newpath):
-                with open(newpath, "wb") as fout:
-                    fout.write(data)
-                if newpath.lower() != oldpath.lower():
-                    os.remove(oldpath)
-            else:
-                if newpath.lower() != oldpath.lower():
-                    print(F"Already exist: {newpath}")
-            record[oldpath] = newpath
-
-    print(len(list(k for k in record if record[k] != k)), "files renamed", file=sys.stderr)
+    tasks = [threading.Thread(target=rename2, args=[d, sre, method, excludes]) for d in srcdirs]
+    for t in tasks:
+        t.start()
+    for t in tasks:
+        t.join()
 
 
 if __name__ == "__main__":
     with open("rename2.json") as fin:
         conf = json.load(fin)
-        srcdir = conf["srcdir"]
-        sre = conf["regex"]
-        method = conf["method"]
-        excludes = conf["excludes"]
-        print("Start rename files using configure:", file=sys.stderr)
-        print(json.dumps(conf, indent=4), file=sys.stderr)
-        Rename2(srcdir, sre, method, excludes)
-    
+    srcdirs = conf["srcdir"]
+    sre = conf["regex"]
+    method = conf["method"]
+    excludes = conf["excludes"]
+    print("Start rename files using configure:", file=sys.stderr)
+    print(json.dumps(conf, indent=4), "\n", file=sys.stderr)
+    Rename2(srcdirs, sre, method, excludes)
+    print()
     os.system("pause")
