@@ -9,10 +9,13 @@ def rename2(srcdir: str, sre: str, method: str, excludes: list):
     record = {}
     names = os.listdir(srcdir)
     print("Process:", os.path.realpath(srcdir), len(names), file=sys.stderr)
-    for name in names:
-        oldpath = F"{srcdir}\\{name}"
+
+    for i, name in enumerate(names):
+        if (i + 1) % 1000 == 0:
+            print(("TID-%-5d Processed %d" % (threading.get_ident(), i+1)), file=sys.stderr, flush=True)
         if not x.match(name):
             continue
+
         skip = False
         for ex in excludes:
             if ex in name:
@@ -20,6 +23,8 @@ def rename2(srcdir: str, sre: str, method: str, excludes: list):
                 break
         if skip:
             continue
+
+        oldpath = F"{srcdir}\\{name}"
         with open(oldpath, "rb") as fin:
             data = fin.read()
         if method == "md5":
@@ -29,11 +34,13 @@ def rename2(srcdir: str, sre: str, method: str, excludes: list):
             while len(hval) < 8:
                 hval = "0" + hval
             hval = F"{hval}-{os.path.getsize(oldpath)}"
+        
         ext = name.rsplit(".", 1)[-1]
         if ext == name:
             ext = ""
         else:
             ext = "." + ext
+        
         newpath = F"{srcdir}\\{hval}{ext}"
         if not os.path.exists(newpath):
             with open(newpath, "wb") as fout:
@@ -43,7 +50,9 @@ def rename2(srcdir: str, sre: str, method: str, excludes: list):
         else:
             if newpath.lower() != oldpath.lower():
                 print(F"Already exist: {newpath}", file=sys.stderr)
+        
         record[oldpath] = newpath
+    
     n = len(list(k for k in record if record[k] != k))
     print(n, F"files renamed in {os.path.realpath(srcdir)}", file=sys.stderr)
 
