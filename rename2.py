@@ -59,7 +59,10 @@ def rename2(srcdir: str, sre: str, method: str, excludes: list):
 
 def Rename2(srcdirs: list, sre: str, method: str, excludes: list):
     """ Rename all files info specific format """
+    if sre in ("", ".+", ".*") or len(sre) < 8:
+        raise ValueError(F"Regex is wrong or dangerous: {sre}")
     x = re.compile(sre)
+
     if method not in ("md5", "crc32-size"):
         raise ValueError(method)
     tasks = [threading.Thread(target=rename2, args=[d, sre, method, excludes]) for d in srcdirs]
